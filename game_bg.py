@@ -9,8 +9,8 @@ class Background(sprite.Sprite):
     def __init__(self, img, x, y, img_width, img_height, game_ui):
         super(Background, self).__init__(img, x, y, img_width, img_height)
         
-        player = game_ui.player
-        self.rb = RigidBody(x, y, player.mass)
+        self._player = game_ui.player
+        self.rb = RigidBody(x, y, self._player.mass)
         self._colliders = []
     
     def add_collider(self, x, y, w, h):
@@ -20,7 +20,7 @@ class Background(sprite.Sprite):
         for collider in self._colliders:
             collider.display()
     
-    def move(self):
+    def move(self):        
         self.rb.move()
         self.rb.apply_force()
         self._x, self._y = self.rb.get_pos().x_val, self.rb.get_pos().y_val

@@ -12,7 +12,6 @@ class Enemy(sprite.Sprite):
     
     # enemy frames mapped to (their file path, pointer to next animation played, frame_duration)
     animations = {"walking": (["EnemyWalk1.png", "EnemyWalk2.png"], None, 10)}
-    enemies = []
     
     def __init__(self, img, x, y, img_width, img_height, vel, game_ui):
         super(Enemy, self).__init__(img, x, y, img_width, img_height)
@@ -38,10 +37,25 @@ class Enemy(sprite.Sprite):
     
     def move(self):
         """Makes the enemy follow the player"""
-        self._change_direction()    
+        self._change_direction()
+        
+        # if the enemy reaches the tree trunk, make it stop
+        if self._direction_x == 1 and self._game_ui.fg.colliders[-1].x <= self._box_collider.x \
+                <= self._game_ui.fg.colliders[-1].x + self._game_ui.fg.colliders[-1].w:
+            self._rb.vel._x_val += abs(self._rb.vel.x_val)
+        elif self._direction_x == -1 and self._game_ui.fg.colliders[-1].x <= self._box_collider.x + self._box_collider.w\
+                  <= self._game_ui.fg.colliders[-1].x + self._game_ui.fg.colliders[-1].w:
+            self._rb.vel._x_val += -abs(self._rb.vel.x_val)
+        
         self._rb.vel._x_val += self._game_ui.fg.rb.vel.x_val
         self._rb.move()
         
         self._x, self._y = self._rb.get_pos().x_val, self._rb.get_pos().y_val
         self._box_collider.change_pos(self._x + 40, self._y + 100)
         
+    def hit(self):
+        print("HI")
+    
+    @property
+    def box_collider(self):
+        return self._box_collider

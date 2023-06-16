@@ -1,4 +1,6 @@
 from gamelogic import GameLogic
+from game_settings import Settings
+
 import sprite
 import physics
 from heart import Heart
@@ -46,7 +48,8 @@ class Player(sprite.Sprite):
     
     def _check_keys(self):
         force_x = 0
-        if self._game_logic.keys_pressed['a'] and not self._right_key_pressed:
+        if self._game_logic.keys_pressed['a'] and not self._right_key_pressed \
+                and (self._game_logic.game_ui.bg.colliders[0].x < self._run_box_collider.x and self._game_logic.game_ui.bg.colliders[0].x < self._standing_box_collider.x):
             force_x -= 800
             self._direction_key_pressed_cnt += 1
             self._left_key_pressed = True
@@ -57,7 +60,9 @@ class Player(sprite.Sprite):
                 self._axe_box_collider._x = self._x + 170 - self._axe_box_collider.w - self._standing_box_collider.w
                 self.flip_x(-1)
         
-        if self._game_logic.keys_pressed['d'] and not self._left_key_pressed:
+        if self._game_logic.keys_pressed['d'] and not self._left_key_pressed \
+                and (self._run_box_collider.x + self._run_box_collider.w < self._game_logic.game_ui.bg.colliders[0].x + self._game_logic.game_ui.bg.colliders[0].w
+                         and self._standing_box_collider.x + self._standing_box_collider.w < self._game_logic.game_ui.bg.colliders[0].x + self._game_logic.game_ui.bg.colliders[0].w):
             force_x += 800
             self._direction_key_pressed_cnt += 1
             self._right_key_pressed = True
@@ -86,6 +91,7 @@ class Player(sprite.Sprite):
     def move(self):
         if self.anim.curr_anim != "attack":
             self._is_attacking = False
+            self._axe_box_collider.set_active(False)
         if self._is_attacking:
             return
 
@@ -138,6 +144,7 @@ class Player(sprite.Sprite):
             self._axe_box_collider.set_active(True)
             
             self.anim.set_curr_anim("attack")
+            self._game_logic.game_ui.axe_sound.trigger()
             self._is_attacking = True
         
     def display(self):
@@ -151,9 +158,7 @@ class Player(sprite.Sprite):
             if wall.collision_direction(self._standing_box_collider, player_vel) == "horizontal":
                 self._rb.vel._x_val = 0
                 for force in self._rb.forces_applied:
-                    print(force)
                     force.force._x_val = 0
-            print(wall.collision_direction(self._standing_box_collider, player_vel))
     
     def is_grounded(self, *platforms):
         """ 
@@ -163,7 +168,6 @@ class Player(sprite.Sprite):
         """
         player_vel = physics.Vector2D(-self._game_logic.game_ui.fg.rb.vel.x_val, 0)  # relative velocity compared to the bg
         for platform in platforms:
-            #print(self._standing_box_collider.collided_with(platform), platform.collided_with(self._standing_box_collider))
             if (self._standing_box_collider.collided_with(platform) and platform.collision_direction(self._standing_box_collider, player_vel) == "vertical") \
                     or (self._run_box_collider.collided_with(platform) and platform.collision_direction(self._run_box_collider, player_vel) == "vertical"):
                 return True
@@ -225,4 +229,8 @@ class Player(sprite.Sprite):
     @property
     def rb(self):
         return self._rb
+    
+    @property
+    def hit_wall(self):
+        return self._hit_wall
     
