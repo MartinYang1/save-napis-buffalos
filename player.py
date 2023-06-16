@@ -22,11 +22,13 @@ class Player(sprite.Sprite):
         super(Player, self).__init__(img, x, y, img_width, img_height)
         
         self.anim = Animator(**{anim: [list(map(lambda file: loadImage(file), info[0])), info[1], info[2]] for anim, info in Player.animations.items()})
+        self.anim.set_curr_anim("idle")
+
         self._rb = physics.RigidBody(x, y, mass)
         
-        self._standing_box_collider = BoxCollider(x + 95, y + 65, img_width - 205, img_height - 85)
-        self._run_box_collider = BoxCollider(x + 95, y + 65, img_width - 170, img_height - 85)
-        self._axe_box_collider = BoxCollider(x + 140, y + 80, 50, img_height - 160)
+        self._standing_box_collider = BoxCollider(x + 115, y + 65, img_width - 235, img_height - 85)
+        self._run_box_collider = BoxCollider(x + 110, y + 65, img_width - 200, img_height - 85)
+        self._axe_box_collider = BoxCollider(x + 170, y + 150, 40, img_height - 160)
         self._run_box_collider.set_active(False)
         self._axe_box_collider.set_active(False)
         
@@ -51,6 +53,8 @@ class Player(sprite.Sprite):
             self._right_key_pressed = False
             
             if self._direction_key_pressed_cnt == 1:
+                # flip player and colliders
+                self._axe_box_collider._x = self._x + 170 - self._axe_box_collider.w - self._standing_box_collider.w
                 self.flip_x(-1)
         
         if self._game_logic.keys_pressed['d'] and not self._left_key_pressed:
@@ -60,7 +64,9 @@ class Player(sprite.Sprite):
             self._left_key_pressed = False
             
             if self._direction_key_pressed_cnt == 1:
+                self._axe_box_collider._x = self._x + 170
                 self.flip_x(1)
+
         self._game_logic.game_ui.fg.rb.add_force(physics.Vector2D(-force_x, 0), 0.5)
         
     def _horizontal_movement(self):
@@ -90,11 +96,11 @@ class Player(sprite.Sprite):
         
         # set the coordinates of dependencies to the player coordinates (only needed for vertical movement)
         self._x, self._y = self._rb.get_pos().x_val, self._rb.get_pos().y_val
-        self._standing_box_collider.change_pos(self._x + 95, self._y + 65)
-        self._run_box_collider.change_pos(self._x + 95, self._y + 65)
+        self._standing_box_collider.change_pos(self._x + 115, self._y + 65)
+        self._run_box_collider.change_pos(self._x + 110, self._y + 65)
         for heart in self._lives:
             heart.y = self._y
-        
+    
     def idle(self):
         if not self._game_logic.keys_pressed['d'] and not self._game_logic.keys_pressed['a'] and not self._is_attacking:
             self._direction_key_pressed_cnt = 0
@@ -139,14 +145,27 @@ class Player(sprite.Sprite):
             heart.display()
         self.anim.play(self._x, self._y, self._img_width, self._img_height, self._direction_x)
         
+    def hit_wall(self, *walls):
+        player_vel = physics.Vector2D(-self._game_logic.game_ui.fg.rb.vel.x_val, 0)  # relative velocity compared to the bg
+        for wall in walls:
+            if wall.collision_direction(self._standing_box_collider, player_vel) == "horizontal":
+                self._rb.vel._x_val = 0
+                for force in self._rb.forces_applied:
+                    print(force)
+                    force.force._x_val = 0
+            print(wall.collision_direction(self._standing_box_collider, player_vel))
+    
     def is_grounded(self, *platforms):
         """ 
         Checks if the player is touching any platform, including the ground
         :param platforms: the box colliders of those platforms
         :return: True or False
         """
+        player_vel = physics.Vector2D(-self._game_logic.game_ui.fg.rb.vel.x_val, 0)  # relative velocity compared to the bg
         for platform in platforms:
-            if self._standing_box_collider.collided_with(platform) or self._run_box_collider.collided_with(platform):
+            #print(self._standing_box_collider.collided_with(platform), platform.collided_with(self._standing_box_collider))
+            if (self._standing_box_collider.collided_with(platform) and platform.collision_direction(self._standing_box_collider, player_vel) == "vertical") \
+                    or (self._run_box_collider.collided_with(platform) and platform.collision_direction(self._run_box_collider, player_vel) == "vertical"):
                 return True
     
     def hit(self, enemy):

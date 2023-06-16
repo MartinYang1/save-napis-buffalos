@@ -15,22 +15,25 @@ class BoxCollider:
         :return: True or False
         """
         if self._is_active and other.is_active:
-            return (other.x <= self._x <= other.x + other.w or other.x <= self._x + self._w <= other.x + other.w) \
-                and (other.y <= self._y <= other.y + other.h or other.y <= self._y + self._h <= other.y + other.h)
+            return ((other.x <= self._x <= other.x + other.w or other.x <= self._x + self._w <= other.x + other.w) \
+                and (other.y <= self._y <= other.y + other.h or other.y <= self._y + self._h <= other.y + other.h)) or \
+                ((self._x <= other.x <= self._x + self._w or self._x <= other.x + other.w <= self._x + self._w) \
+                and (self._y <= other.y <= self._y + self._h or self._y <= other.y + other.h <= self._y + self._h))
     
-    def get_collision_direction(self, other):
+    def collision_direction(self, other, vel):
         """
-        Calculates the direction of the collision (horizontal or vertical). Use a really simply
-        algorithm that works for simple games only
+        Calculates the direction of the collision (horizontal or vertical). Uses a really simply
+        algorithm that works for simple games only since some values are hardcoded.
         :param other: the other box collider
+        :param vel: the velocity of the other gameobject
         :return: the direction as a str
         """
-        if self.collided_with(other):
-            if other.y <= self._y + self._h <= other.y + 20 or other.y + other.h <= self._y <= other.y + other.h - 20:
-                return "vertical"
-            else:
-                return "horizontal"
-        
+        if (other.x + other.w <= self._x <= self._x + 10 and vel.x_val > 0) or \
+                (other.x - 10 <= self._x + self._w <= other.x and vel.x_val < 0):
+            return "horizontal"
+        else:
+            return "vertical"
+
     def change_pos(self, x, y):
         self._x, self._y = x, y
     
@@ -45,6 +48,10 @@ class BoxCollider:
     @property
     def x(self):
         return self._x
+    
+    @x.setter
+    def x(self, x):
+        self._x = x
 
     @property
     def y(self):

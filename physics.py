@@ -147,7 +147,7 @@ class RigidBody:
             return Vector2D(-force_friction, 0)
         else:
             return Vector2D(force_friction, 0)
-
+    
     def move(self):
         self._pos += self._vel
     
@@ -172,6 +172,9 @@ class RigidBody:
     @is_grounded.setter
     def is_grounded(self, is_grounded):
         self._is_grounded = is_grounded
+    
+    def forces_applied(self):
+        return self._forces_applied
 
 
 class Vector2D:

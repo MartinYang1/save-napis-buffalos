@@ -1,5 +1,6 @@
 from game_ui import GameUI
-import physics
+from game_settings import Settings
+
 
 add_library('minim')
 
@@ -11,8 +12,8 @@ def setup():
     
     minim = Minim(this)
     game_song = minim.loadFile("game music.mp3")
-    game_song.loop()
-    size(1280, 720, P2D)
+    #game_song.loop()
+    size(Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT, P2D)
 
 
 def draw():

@@ -8,6 +8,7 @@ import physics
 from gamelogic import GameLogic
 from game_bg import Background
 from heart import Heart
+from enemy import Enemy
 
 
 add_library('minim')
@@ -22,11 +23,12 @@ class GameUI:
                                  loadImage("PlayerIdle1.png").height*0.55, 50, self.game_logic)
         self.bg = Background(loadImage("Background.png"), -1000, 0, 3200, 720, self)
         self.fg = Background(loadImage("Ground.png"), -900, 0, 2560, 720, self)
+        self.enemy = Enemy(loadImage("EnemyWalk1.png"), 700, 420, loadImage("EnemyWalk1.png").width * 0.5, 
+                           loadImage("EnemyWalk1.png").height * 0.5, 2, self)
     
     def setup(self):
         self.fg.add_collider(0, 660, 1280, 50)
         self.fg.add_collider(340, 529, 100, 130)
-        self.player.anim.set_curr_anim("idle")
         physics.Physics2D.apply_gravity(self.player._rb)
         
         smooth()
@@ -39,22 +41,28 @@ class GameUI:
         self._manage_hearts()
         self.player.display()
         noFill()
-        # self.player.standing_box_collider.display()
-        # self.player.run_box_collider.display()
-        # self.player.axe_box_collider.display()
+        self.player.standing_box_collider.display()
+        self.player.run_box_collider.display()
+        self.player.axe_box_collider.display()
         
         self.player.attack()
         self.player.move()
+        self.enemy.move()
+        self.enemy.display()
     
     def _manage_bg(self):
         self.bg.rb.vel._x_val = self.fg.rb.vel.x_val * 1.25  # bg moves 25% faster than fg for parallax scrolling effect
         self.fg.move()
         self.bg.move()
-        self.fg.colliders[-1].change_pos(self.fg.x + 1240, 529)
+        self.fg.colliders[-1].change_pos(self.fg.x + 1240, 529)  # tree trunk collider
+        #print(self.player.standing_box_collider.collided_with(self.fg.colliders[-1]) or self.fg.colliders[-1].collided_with(self.player.run_box_collider) or self.player.run_box_collider.collided_with(self.fg.colliders[-1]))
+        
+        if self.player.run_box_collider.collided_with(self.fg.colliders[-1]):
+            self.player.hit_wall(self.fg.colliders[-1])
         
         self.bg.display()
         self.fg.display()
-        # self.fg.display_colliders()
+        self.fg.display_colliders()
         
     def _manage_hearts(self):
         for heart in Heart.collectables:
