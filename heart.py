@@ -1,4 +1,4 @@
-from random import randrange, choice
+from random import uniform, choice
 import sprite
 from collision import BoxCollider
 
@@ -22,8 +22,8 @@ class Heart(sprite.Sprite):
         :param l_bound: the left boundary
         :param r_bound: the right boundary
         """
-        spawn_x = choice((randrange(l_bound, player.x - 100), 
-                         randrange(player.x + player.img_width + 100, r_bound)))
+        spawn_x = choice((uniform(l_bound, player.x - 100), 
+                         uniform(player.x + player.img_width + 100, r_bound)))
         cls.collectables.append(Heart(loadImage("Heart.png"), spawn_x, y, 
                                       loadImage("Heart.png").width * 0.8, loadImage("Heart.png").height * 0.8, 
                                       player, True))
@@ -31,6 +31,7 @@ class Heart(sprite.Sprite):
     def collected(self):
         """Increments the player lives and destroys the gameobject if collected by the player"""
         if self._box_collider.collided_with(self._player.standing_box_collider) or self._box_collider.collided_with(self._player.run_box_collider):
+            self._player.add_life()
             self.collectables.remove(self)
     
     @property

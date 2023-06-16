@@ -84,17 +84,16 @@ class RigidBody:
         elif len(self._forces_applied) == 1:
             net_force = self._forces_applied[0].force
         else:
-            
             try:
                 net_force = reduce(lambda f1, f2: f1.force + f2.force, self._forces_applied)
             except AttributeError:
                 net_force = Vector2D(0, 0)
                 for i in range(0, len(self._forces_applied)-1, 2):
                     net_force += self._forces_applied[i].force + self._forces_applied[i+1].force
-        cnt = 0
-        for enacted_force in self._forces_applied:
-            if enacted_force.force == Vector2D(0, -1000):
-                cnt += 1
+        # cnt = 0
+        # for enacted_force in self._forces_applied:
+        #     if enacted_force.force == Vector2D(0, -1000):
+        #         cnt += 1
         net_force += self._calculate_drag()
         return net_force
     

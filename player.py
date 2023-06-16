@@ -1,3 +1,6 @@
+import thread
+
+
 from gamelogic import GameLogic
 from game_settings import Settings
 
@@ -14,23 +17,25 @@ class Player(sprite.Sprite):
     
     # player frames mapped to (their file path, pointer to next animation played, frame_duration)
     animations = {
-                  "idle": (["PlayerIdle1.png"] * 3 + ["PlayerIdle2.png"] * 2 + ["PlayerIdle3.png"] * 3 + ["PlayerIdle2.png"] * 2, None, 3),
+                  "idle": (["PlayerIdle1.png"] * 3 + ["PlayerIdle2.png"] * 2 + ["PlayerIdle3.png"] * 3 + ["PlayerIdle2.png"] * 2, None, 4),
                   "attack": (["PlayerAttack1.png"] + ["PlayerAttack2.png"] * 2 + ["PlayerAttack3.png"] * 2 + ["PlayerAttack4.png"] * 2, "idle", 3),
                   "run": (["PlayerRun1.png"] * 2 + ["PlayerRun2.png"] * 3, None, 2),
-                  "jump": (["PlayerJump.png"], None, 1)
+                  "jump": (["PlayerJump.png"], None, 1),
+                  "hit": (["PlayerIdle1.png", "PlayerInvisible.png"], None, 3)
                   }
     
-    def __init__(self, img, x, y, img_width, img_height, mass, game_logic):
+    def __init__(self, img, x, y, img_width, img_height, mass, num_lives, game_logic):
         super(Player, self).__init__(img, x, y, img_width, img_height)
         
         self.anim = Animator(**{anim: [list(map(lambda file: loadImage(file), info[0])), info[1], info[2]] for anim, info in Player.animations.items()})
         self.anim.set_curr_anim("idle")
 
         self._rb = physics.RigidBody(x, y, mass)
+        physics.Physics2D.apply_gravity(self._rb)
         
         self._standing_box_collider = BoxCollider(x + 115, y + 65, img_width - 235, img_height - 85)
         self._run_box_collider = BoxCollider(x + 110, y + 65, img_width - 200, img_height - 85)
-        self._axe_box_collider = BoxCollider(x + 170, y + 150, 40, img_height - 160)
+        self._axe_box_collider = BoxCollider(x + 165, y + 50, 50, img_height - 160)
         self._run_box_collider.set_active(False)
         self._axe_box_collider.set_active(False)
         
@@ -42,7 +47,9 @@ class Player(sprite.Sprite):
         self._is_hit = False
         
         self._mass = mass
-        self._lives = [Heart(loadImage("Heart.png"), x + 38 + 25 * i, y, 30, 30, self) for i in range(2, 5)]
+        self._lives = [Heart(loadImage("Heart.png"), x + 38 + 25 * i, y, 30, 30, self) for i in range(2, num_lives + 2)]
+        self._immunity_duration = 2  # how long immunity lasts when the player is hit in sec
+        self._prev_hit_time = 0
         
         self._game_logic = game_logic
     
@@ -57,7 +64,7 @@ class Player(sprite.Sprite):
             
             if self._direction_key_pressed_cnt == 1:
                 # flip player and colliders
-                self._axe_box_collider._x = self._x + 170 - self._axe_box_collider.w - self._standing_box_collider.w
+                self._axe_box_collider._x = self._x + 165 - self._axe_box_collider.w - self._standing_box_collider.w - 10
                 self.flip_x(-1)
         
         if self._game_logic.keys_pressed['d'] and not self._left_key_pressed \
@@ -69,9 +76,9 @@ class Player(sprite.Sprite):
             self._left_key_pressed = False
             
             if self._direction_key_pressed_cnt == 1:
-                self._axe_box_collider._x = self._x + 170
+                self._axe_box_collider._x = self._x + 165
                 self.flip_x(1)
-
+            
         self._game_logic.game_ui.fg.rb.add_force(physics.Vector2D(-force_x, 0), 0.5)
         
     def _horizontal_movement(self):
@@ -104,6 +111,7 @@ class Player(sprite.Sprite):
         self._x, self._y = self._rb.get_pos().x_val, self._rb.get_pos().y_val
         self._standing_box_collider.change_pos(self._x + 115, self._y + 65)
         self._run_box_collider.change_pos(self._x + 110, self._y + 65)
+        self._axe_box_collider._y = self._y + 50  # x coordinates already changed in another function
         for heart in self._lives:
             heart.y = self._y
     
@@ -130,21 +138,25 @@ class Player(sprite.Sprite):
         
         if not self._rb.is_grounded and self.is_grounded(*self._game_logic.game_ui.fg.colliders):
             self._rb.is_grounded = True
-            self._is_hit = False
-            self.anim.set_curr_anim("idle") if self._rb.vel.x_val == 0 or self._is_hit else self.anim.set_curr_anim("run")
+            if self._is_hit:
+                self.anim.set_curr_anim("hit")
+            else:
+                self.anim.set_curr_anim("idle") if self._rb.vel.x_val == 0 else self.anim.set_curr_anim("run")
             self._space_pressed_cnt = 0
             physics.Physics2D.remove_gravity(self._rb)
             self._rb._vel._y_val = 0
     
     def attack(self):
         """Makes player swing his axe. When the player attacks, he cannot move"""
-        if self._game_logic.keys_pressed['q'] and self._rb.is_grounded and not self._is_attacking:
+        if (keyPressed and key == CODED and keyCode == SHIFT) and \
+                self._rb.is_grounded and not self._is_attacking:
             self._run_box_collider.set_active(False)
             self._standing_box_collider.set_active(True)
             self._axe_box_collider.set_active(True)
             
             self.anim.set_curr_anim("attack")
-            self._game_logic.game_ui.axe_sound.trigger()
+            #self._game_logic.game_ui.axe_sound.trigger()
+            
             self._is_attacking = True
         
     def display(self):
@@ -172,17 +184,31 @@ class Player(sprite.Sprite):
                     or (self._run_box_collider.collided_with(platform) and platform.collision_direction(self._run_box_collider, player_vel) == "vertical"):
                 return True
     
-    def hit(self, enemy):
-        # if self._standing_box_collider.collided_with(enemy.collider) or \
-        #         self._run_box_collider.collided_with(enemy.collider):
-        self._is_hit = True
-        self.flip_x(-enemy.direction_x)  # makes player face the enemy
+    def hit(self, enemies):
+        if self._is_hit:
+            if frameCount / float(Settings.FRAME_RATE) - self._prev_hit_time >= self._immunity_duration:
+                self._is_hit = False
+                self.anim.set_curr_anim("idle")
+            else:
+                return
         
-        self._rb.add_force(physics.Vector2D(-self._direction_x * 2200, -1500), 0.6)  # push player backwards
-        
-        self.anim.set_curr_anim("jump")
-        self.lives.pop(-1)
-        
+        for enemy in enemies:
+            if self._standing_box_collider.collided_with(enemy.box_collider) or \
+                    self._run_box_collider.collided_with(enemy.box_collider):
+                self._is_hit = True
+                self._prev_hit_time = frameCount / float(Settings.FRAME_RATE)
+                self.flip_x(enemy.direction_x)  # makes player face the enemy
+                
+                self._game_logic.game_ui.fg.rb.add_force(physics.Vector2D(self._direction_x * 11000, 0), 0.6)  # push player backwards
+                self._rb.add_force(physics.Vector2D(0, -1600), 0.6)
+                
+                self.anim.set_curr_anim("jump")
+                self.lives.pop(-1)
+                break
+    
+    def add_life(self):
+        new_life_x = self._lives[-1].x + 25
+        self._lives.append(Heart(loadImage("Heart.png"), new_life_x, self._y, 30, 30, self))
     
     """Getters and setters"""
     

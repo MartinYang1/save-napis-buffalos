@@ -1,5 +1,12 @@
 class Settings:
     FRAME_RATE = 60
+    
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
-    #curr_time = 
+    
+    game_font = None
+    
+    @classmethod
+    def initialize_game_font(cls):
+        cls.game_font = createFont("Arial", 16, True)
+    

@@ -8,9 +8,12 @@ add_library('minim')
 def setup():
     global gameUI
     gameUI = GameUI(this, Minim(this))
-    gameUI.setup()
-
+    
+    smooth()
+    frameRate(Settings.FRAME_RATE)
     size(Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT, P2D)
+    
+    gameUI.setup()
 
     
 def draw():
@@ -18,9 +21,6 @@ def draw():
 
 def stop():
     gameUI.stop()
-#def mousePressed():
-    #print(mouseX, mouseY)
-    #gameUI.mousePressed()
     
 def keyPressed():
     gameUI.keyPressed()
