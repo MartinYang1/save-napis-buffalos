@@ -18,7 +18,7 @@ class Enemy(sprite.Sprite):
         
         self._anim = Animator(**{anim: [list(map(lambda file: loadImage(file), info[0])), info[1], info[2]] for anim, info in Enemy.animations.items()})
         self._anim.set_curr_anim("walking")
-        self._box_collider = BoxCollider(x + 40, y + 100, img_width - 110, img_height - 120)
+        self._box_collider = BoxCollider(x + 70, y + 125, img_width - 125, img_height - 100)
         
         self._rb = RigidBody(x, y, 300)
         self._vel = vel
@@ -31,7 +31,7 @@ class Enemy(sprite.Sprite):
         self._anim.play(self._x, self._y, self._img_width, self._img_height, self._direction_x)
     
     def _change_direction(self):
-        """Flips the sprite and velocity"""
+        """Flips the sprite and velocity to follow the player"""
         direction_x = 1 if self._x < self._game_ui.player.x else -1
         self._rb.vel._x_val = direction_x * self._vel
         self.flip_x(-direction_x)
@@ -55,12 +55,13 @@ class Enemy(sprite.Sprite):
         self._rb.move()
         
         self._x, self._y = self._rb.get_pos().x_val, self._rb.get_pos().y_val
-        self._box_collider.change_pos(self._x + 40, self._y + 100)
+        self._box_collider.change_pos(self._x + 70, self._y + 125)
         
     def hit(self):
+        """Plays its death animation and pushes it back slightly"""
         self._box_collider.set_active(False)
         self._anim.set_curr_anim("hit")
-        
+        self._game_ui.monster_death_sound.trigger()
         self._rb.add_force(Vector2D(self._direction_x * 8000, -200), self._death_duration)
     
     @property

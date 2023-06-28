@@ -8,5 +8,5 @@ class Settings:
     
     @classmethod
     def initialize_game_font(cls):
-        cls.game_font = createFont("Arial", 16, True)
+        cls.game_font = createFont("Roboto-Regular.ttf", 16, True)
     

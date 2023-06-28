@@ -25,6 +25,10 @@ class GameUI:
     def _load_files(self):
         self.intro_song = self.minim.loadFile("intro_screen_music.mp3")
         self.game_song = self.minim.loadFile("game_music.mp3")
+        
+        self.axe_sound = self.minim.loadSample("axe_swing.mp3")
+        self.monster_death_sound = self.minim.loadSample("monster_death.mp3")
+        self.heart_collected_sound = self.minim.loadSample("heart_collected.mp3")
     
     def setup_intro_screen(self):
         self.player = Player(loadImage("PlayerIdle1.png"), 500, 100, loadImage("PlayerIdle1.png").width*0.55, 
@@ -35,7 +39,7 @@ class GameUI:
         self.bg = Background(loadImage("Background.png"), -1000, 0, 3200, 720, self)
         self.fg = Background(loadImage("Ground.png"), -645, 0, 2560, 720, self)
         self.napi_icon = loadImage("napi_icon.png")
-        self.spawner = Spawner(-850, 1900, 2, self)
+        self.spawner = Spawner(-850, 1900, 2, 3.2, self)
         
         self.intro_song.rewind()
         self.intro_song.loop()
@@ -44,7 +48,7 @@ class GameUI:
     def run_intro_screen(self):
         self.bg.display()
         self.fg.display()
-        image(self.napi_icon, 80, 250, self.napi_icon.width * 1.8, self.napi_icon.height * 1.8)
+        image(self.napi_icon, -40, 250, self.napi_icon.width * 2, self.napi_icon.height * 2)
         self.player_intro_screen.display()
         
         textFont(Settings.game_font, 60)
@@ -53,10 +57,18 @@ class GameUI:
         text("Save Napi's Buffalos", Settings.SCREEN_WIDTH // 2, 100)
         
         textFont(Settings.game_font, 35)
-        textAlign(CENTER)
         text("Press SPACE to begin", Settings.SCREEN_WIDTH // 2, 450)
+        
+        fill(255, 0, 0)
+        textAlign(RIGHT)
+        text("High Score: " + str(self.game_logic.high_score), Settings.SCREEN_WIDTH - 40, 60)
+        noFill()
     
     def setup_game_screen(self):        
+        self.intro_song.pause()
+        self.game_song.rewind()
+        self.game_song.loop()
+        
         self.fg.add_collider(0, 660, 1280, 50)
         self.bg.add_collider(self.bg.x + 600, 0, 2400, 800)
         self.fg.add_collider(340, 529, 100, 180)
@@ -69,9 +81,6 @@ class GameUI:
         
         self.next_level = False
         self.setup_next_level()
-        
-        self.intro_song.pause()
-        self.game_song.loop()
     
     def run_game_screen(self):
         self._manage_bg()
@@ -97,6 +106,9 @@ class GameUI:
         self.player.move()
         self.player.hit(self.spawner.enemies)
     
+    def setup_end_screen(self):
+        self.game_song.pause()
+    
     def run_end_screen(self):
         game_end_bg = loadImage("game_end.jpg")
         image(game_end_bg, 0, 0, Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT)
@@ -111,7 +123,7 @@ class GameUI:
     def setup(self):
         self._load_files()
         Settings.initialize_game_font()
-                
+
         self.setup_intro_screen()
 
     def draw(self):
@@ -123,6 +135,9 @@ class GameUI:
             self.run_end_screen()
     
     def stop(self):
+        """Closes all threads and audio UI safely when exiting program"""
+        self.game_logic.end_game()
+        
         self.spawn_thread.exit()
         self.spawn_thread.join()
         self.check_enemy_collision.exit()
@@ -135,6 +150,7 @@ class GameUI:
         super().stop()
     
     def _manage_bg(self):
+        """Moves the backgrounds and their colliders, as well as displaying them to the screen"""
         self.bg.rb.vel._x_val = self.fg.rb.vel.x_val * 1.25  # bg moves 25% faster than fg for parallax scrolling effect
         self.fg.move()
         self.bg.move()
@@ -145,13 +161,13 @@ class GameUI:
         self.fg.display()
         
     def _manage_hearts(self):
+        """Moves, displays, and checks if the hearts are collected by the player"""
         for heart in Heart.collectables:
             heart.collected()
                 
             heart.x += self.fg.rb.vel.x_val
             heart.box_collider.change_pos(heart.x + 35, heart.y + 40)
             heart.display()
-            heart.box_collider.display()
     
     def _manage_enemies(self):
         self.spawner.move_enemies()

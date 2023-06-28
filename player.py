@@ -155,7 +155,7 @@ class Player(sprite.Sprite):
             self._axe_box_collider.set_active(True)
             
             self.anim.set_curr_anim("attack")
-            #self._game_logic.game_ui.axe_sound.trigger()
+            self._game_logic.game_ui.axe_sound.trigger()
             
             self._is_attacking = True
         

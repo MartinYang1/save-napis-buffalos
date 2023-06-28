@@ -34,24 +34,27 @@ class Animator:
         return -(sprite_x + sprite_w)
 
     def play(self, sprite_x, sprite_y, sprite_w, sprite_h, direction_x):
-        pushMatrix()
-        scale(direction_x, 1)
-        if direction_x == -1:
-            sprite_x = self._get_flipped_anim_x(sprite_x, sprite_w)
-        
-        if frameCount % self._frame_duration == 0:
-            try:
-                self._curr_frame = next(self._curr_anim_frames)
-            except StopIteration:
-                if self._next_anim:
-                    self.set_curr_anim(self._next_anim)
-                    return
-                self._curr_anim_frames = iter(self._animations[self._curr_anim][0])
-                self._curr_frame = next(self._curr_anim_frames)
-            image(self._curr_frame, sprite_x, sprite_y, sprite_w, sprite_h)
-        else:
-            image(self._curr_frame, sprite_x, sprite_y, sprite_w, sprite_h)
-        popMatrix()
+        try:
+            pushMatrix()
+            scale(direction_x, 1)
+            if direction_x == -1:
+                sprite_x = self._get_flipped_anim_x(sprite_x, sprite_w)
+            
+            if frameCount % self._frame_duration == 0:
+                try:
+                    self._curr_frame = next(self._curr_anim_frames)
+                except StopIteration:
+                    if self._next_anim:
+                        self.set_curr_anim(self._next_anim)
+                        return
+                    self._curr_anim_frames = iter(self._animations[self._curr_anim][0])
+                    self._curr_frame = next(self._curr_anim_frames)
+                image(self._curr_frame, sprite_x, sprite_y, sprite_w, sprite_h)
+            else:
+                image(self._curr_frame, sprite_x, sprite_y, sprite_w, sprite_h)
+            popMatrix()
+        except Exception:
+            pass
         
     @property
     def curr_anim(self):

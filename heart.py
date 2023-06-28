@@ -31,6 +31,7 @@ class Heart(sprite.Sprite):
     def collected(self):
         """Increments the player lives and destroys the gameobject if collected by the player"""
         if self._box_collider.collided_with(self._player.standing_box_collider) or self._box_collider.collided_with(self._player.run_box_collider):
+            self._player._game_logic.game_ui.heart_collected_sound.trigger()
             self._player.add_life()
             self.collectables.remove(self)
     

@@ -9,16 +9,16 @@ from enemy import Enemy
 class Spawner:
     """A class that spawns an enemy into the game periodically and manages them"""
     
-    def __init__(self, l_bound, r_bound, spawn_rate, game_ui):
+    def __init__(self, l_bound, r_bound, spawn_rate, enemy_vel, game_ui):
         self._l_bound = l_bound
         self._r_bound = r_bound
         
         self._spawn_rate = spawn_rate
         self._spawn_cnt = 0
-        self._spawn_limit = 2
+        self._spawn_limit = 3
         
         self._enemies = []
-        self._enemy_vel = 2
+        self._enemy_vel = enemy_vel
         
         self._pause_collision_checking = threading.Event()
         
