@@ -62,7 +62,7 @@ class GameLogic:
         self.screen = 1
     
     def manage_game_logic(self):
-        threading.Event().wait(1)
+        threading.Event().wait(3)
         while True:
             if self.keys_pressed[' '] and self.screen == 1:
                 self.next_screen()
