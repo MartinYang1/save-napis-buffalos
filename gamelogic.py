@@ -49,6 +49,9 @@ class GameLogic:
                 self.high_score = json.load(f).get('high score')
     
     def end_game(self):
+        if self.level <= self.high_score:
+            return
+        
         self.high_score = self.level
         with open('game_data.json', 'w') as f:
             json.dump({'high score': self.high_score}, f)

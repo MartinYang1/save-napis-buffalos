@@ -82,7 +82,7 @@ class Spawner:
     def spawn_limit(self):
         return self.spawn_limit
     
-    @spawn_rate.setter
+    @spawn_limit.setter
     def spawn_limit(self, spawn_limit):
         self.spawn_limit = spawn_limit
     

@@ -90,10 +90,6 @@ class RigidBody:
                 net_force = Vector2D(0, 0)
                 for i in range(0, len(self._forces_applied)-1, 2):
                     net_force += self._forces_applied[i].force + self._forces_applied[i+1].force
-        # cnt = 0
-        # for enacted_force in self._forces_applied:
-        #     if enacted_force.force == Vector2D(0, -1000):
-        #         cnt += 1
         net_force += self._calculate_drag()
         return net_force
     
@@ -106,11 +102,6 @@ class RigidBody:
         acceleration = net_force / float(self._mass)
         self._prev_vel_x = self._vel.x_val
         
-        #self._vel += acceleration * (1.0 / Settings.FRAME_RATE)
-        # if abs(self._vel.x_val) <= 5:
-        #     self._vel._x_val = 0
-        #print(abs(self._vel.x_val) <= 5)
-        #print(acceleration.x_val < 0 and 0 <= self._vel.x_val < 5)
         if (acceleration.x_val < 0 and 0 < self._vel.x_val < 5) or (acceleration.x_val > 0 and -5 < self._vel.x_val < 0):
             self._vel._x_val = 0
             acceleration._x_val = 0
